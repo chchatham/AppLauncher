@@ -1,0 +1,2 @@
+SubjectID,SessionID,ProtocolID,CenterID,AdministratorID,SessionType,TaskLaunched,LaunchDateTime,CompleteDateTime,LaunchCommand,SerialNumber,Comments
+99999999,99999999,99999999,99999999,99999999,behavioral,Notepad,14:25:17 03.02.2016,14:25:19 03.02.2016,notepad $SubjectID $SessionID,8CG5290C3X,

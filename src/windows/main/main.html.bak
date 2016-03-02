@@ -1,0 +1,152 @@
+<!-- Author: Chris Chatham -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>App Launcher</title>
+      <!-- Stylesheets-->
+      <link rel="stylesheet" href="photon.css">
+</head>
+<SCRIPT LANGUAGE="JavaScript">
+
+    function init() {
+      // other things to do onload
+    }
+
+    function TestRun() {
+      document.getElementById('AdministratorID').value = "99999999";
+      document.getElementById('ProtocolID').value = "99999999";
+      document.getElementById('CenterID').value = "99999999";
+      document.getElementById('SubjectID').value = "99999999";
+      document.getElementById('SessionID').value = "99999999";
+    }
+
+    function ValidateSessionInputs(){
+  		//CheckPeripherals
+      var ConfirmMsg = "Is this correct?";
+  		var retval = confirm(ConfirmMsg.concat("Subject=", form.SubjectID.value, "\nSession=", form.SessionID.value, "\nCenterID=", form.CenterID.value ",\nProtocolID=", form.ProtocolID.value, "\nAdministrator=", form.AdministratorID.value, "\nPlease confirm."));
+  		if (retval==true) {
+              if (document.getElementById('AdministratorID').value="" || document.getElementById('ProtocolID').value="" || document.getElementById('CenterID').value="" || document.getElementById('SessionID').value="" || form.SubjectID.value="") {
+          				alert("Did you forget to enter all values? Please try again.");
+          				Navigate "#AlreadySetup";
+          		}	else if (document.getElementById('AdministratorID').value < 10000000) {
+          				alert("Please enter a valid Administrator ID.");
+          				Navigate "#AlreadySetup";
+          		}	else if (document.getElementById('ProtocolID').value == "") {
+          				alert("Please enter a valid Protocol ID.");
+          				Navigate "#AlreadySetup";
+          		}	else if (document.getElementById('CenterID').value < 1000) {
+          				alert("Please enter a valid Center ID.");
+          				Navigate "#AlreadySetup";
+          		}	else if (form.SubjectID.value < 10000000) {
+          				alert("Please enter a valid Subject ID.");
+          				Navigate "#AlreadySetup";
+          		}	else if (document.getElementById('SessionID').value == "") {
+          				alert("Please enter a valid Session ID.");
+          				Navigate "#AlreadySetup";
+          		}	else if (document.getElementById('CenterID').value) != Left(form.SubjectID.value),4)) {
+          				alert("Either the CenterID or the SubjectID is incorrect. Please check and try again.");
+          				Navigate "#AlreadySetup";
+          		}	else {
+          				TaskCounter = 0;
+          				//GetUniqueSessionsfromTaskLauncherInput();
+          		}
+    	       }
+           }
+
+
+    window.onload = init;
+</script>
+<body>
+  <div class="window">
+    <header class="toolbar toolbar-header">
+      <h1 class="title">App Launcher</h1>
+    </header>
+    <div class="window-content">
+        <a name="Registration"><img src="header.png" width=100% border=0 style="margin-left: 0px; margin-right: 0px;"></a>
+        <center><h1>AppLauncher - Registration</h1></center>
+        <div id="Registration" name="Registration" style="border:1px solid black; margin-top: 10px;margin-left: 10px;margin-right: 10px;margin-bottom: 10px; background: 333333; padding:10px">
+        <h3>To begin the session, please enter the following information. Please enter all "9"s for testing purposes, or simply check the checkbox below.</h3>
+        <form name="form">
+          <div class="form-group">
+            <label>Administrator ID:</label>
+            <input type="text" name="AdministratorID" maxlength='8' autocomplete='off' type="number" required class="form-control" placeholder="AdministratorID" id="AdministratorID">
+          </div>
+          <div class="form-group">
+            <label>Protocol ID:</label>
+            <input type="text" name="ProtocolID" maxlength='8' autocomplete='off' type="number" required class="form-control" placeholder="ProtocolID" id="ProtocolID">
+          </div>
+          <div class="form-group">
+            <label>Center  ID:</label>
+            <input type="text" name="CenterID" maxlength='8' autocomplete='off' type="number" required class="form-control" placeholder="CenterID" id="CenterID">
+          </div>
+          <div class="form-group">
+            <label>Subject ID:</label>
+            <input type="text" name="SubjectID" maxlength='8' autocomplete='off' type="number" required class="form-control" placeholder="SubjectID" id="SubjectID">
+          </div>
+          <div class="form-group">
+            <label>Session ID:</label>
+            <input type="text" name="SessionID" maxlength='8' autocomplete='off' type="number" required class="form-control" placeholder="SessionID" id="SessionID">
+          </div>
+        </form>
+        <button class="btn btn-mini btn-default" name="TestCheckBox" id="TestCheckBox" onclick="TestRun()">Use dummy IDs</button>
+        <input id="button" name="button" type="button" class="btn btn-form btn-primary" value="Submit" onClick="ValidateSessionInputs">
+          </div>
+
+        <p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br>
+
+        <a name="SelectionSessionType"><img src="header.png" width=100% border=0 style="margin-left: 0px; margin-right: 0px;"></a>
+        <div id="Main2.5" name="Main2.5" style="border:1px solid black; margin-top: 10px;margin-left: 10px;margin-right: 10px;margin-bottom: 10px; background: 333333; padding:10px">
+        <h3>Which session would you like to run? Please select:</h3>
+        <div class="container">
+        <!-- <form name="SessionForm">  -->
+        <select name="SessionType">
+        </select>
+        </div>
+        <center><input id="button" name="button" type="button" class="button" value="Submit" onClick="SelectionSessionType"></center>
+        <p><br><p></div>
+
+        <p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br>
+
+        <a name="RunTasks"><img src="header.png" width=100% border=0 style="margin-left: 0px; margin-right: 0px;"></a>
+        <div id="Main3" name="Main3" style="border:1px solid black; margin-top: 10px;margin-left: 10px;margin-right: 10px;margin-bottom: 10px; background: 333333; padding:10px">
+        <h3><span ID="PreliminaryTaskInstructions"></span></h3><br><p><br><h4>
+        <center>
+        <form name="form2">
+        <table style="width:70%">
+          <tr>
+            <td><center><input class="button" type="button" id="button" name="Back" value="Back" onClick="DecrementCounter"></center></td>
+            <td><center><input class="button" type="button" id="RunTaskButton" name="RunTaskButton" value="Run The Current Task" onClick="RunProgram" commandtopass="C:\Windows\notepad.exe"
+        taskbeinglaunched="notepad" LaunchDateTime="now"></center></td>
+            <td><center><input class="button" type="button" id="button" name="Skip" value="Skip" onClick="IncrementCounter"></center></td>
+          </tr>
+        </table>
+        </form>
+        </center>
+        <p><br><p>
+        </div>
+
+      <p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br>
+
+        <a name="SolicitComments"><img src="header.png" width=100% border=0 style="margin-left: 0px; margin-right: 0px;"></a>
+        <div id="Main4" name="Main4" style="border:1px solid black; margin-top: 10px;margin-left: 10px;margin-right: 10px;margin-bottom: 10px; background: 333333; padding:10px">
+        <h3><span ID="TaskCommentstoSolicit"></span></h3><br><p><br><h4>
+        <center>
+        <form name="form3">
+        <table style="width:90%">
+          <tr>
+            <td></td>
+            <td><center>Comments<br><textarea name="Comments" rows=5 cols=70></textarea><p><br><input type="button" id="SubmitCommentsButton" value="Submit Comments and Proceed to Next Task" onClick="SaveComments"></center></td>
+            <td></td>
+          </tr>
+        </table>
+        </center>
+        <p><br><p>
+        </div>
+
+      <p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br>
+
+  </div>
+
+
+</body>
+</html>

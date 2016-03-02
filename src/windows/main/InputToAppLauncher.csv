@@ -1,0 +1,7 @@
+SessionType,TaskBeingLaunched,CommandtoPass,ButtonText,TaskCommentSolicitationText,InstructionText,TransmitCommand
+behavioral,Notepad,notepad $SubjectID $SessionID,Run Notepad,Any comments on Notepad?,Prepare the subject to experience Notepad.,
+behavioral,Command,cmd,Run CmdPrompt,Any comments on CmdPrompt?,Prepare the subject to experience CMD.,
+behavioral,EndBattery,,,,,
+fMRI,Command,cmd,Run CmdPrompt,Any comments on CmdPrompt?,Prepare the subject to experience CMD.,
+fMRI,Notepad,notepad,Run Notepad,Any comments on Notepad?,Prepare the subject to experience Notepad.,
+fMRI,EndBattery,,,,,

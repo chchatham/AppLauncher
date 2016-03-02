@@ -1,0 +1,80 @@
+var app = require('app'),
+    BrowserWindow = require('browser-window');
+var mainWindow = null;
+
+// Quit when all windows are closed.
+app.on('window-all-closed', function() {
+  // On OS X it is common for applications and their menu bar
+  // to stay active until the user quits explicitly with Cmd   Q
+  if (process.platform != 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('ready', function() {
+
+    // Open our fullscreen kiosk mode window
+    mainWindow = new BrowserWindow({
+        resizable: false,
+        frame: false,
+        fullscreen: true,
+        kiosk: true
+    });
+
+    // Set Volume
+    //VolumeUp
+
+    // Block Putting the Computer to Sleep
+    const powerSaveBlocker = require('electron').powerSaveBlocker;
+    var id = powerSaveBlocker.start('prevent-display-sleep');
+
+    // Battery Power Checks
+    var Battery = require('battery.js'); // or similar
+    function logBatteryStatus(status) {
+      console.log('Charging: ' + status.charging);                   // true
+    }
+
+    // Get battery status as soon as it's available
+    Battery.getStatus(function(status, error) {
+      if(error) {
+        console.error('Battery status is not supported');
+        return;
+      }
+      logBatteryStatus(status);
+    });
+
+    // Register a handler to get notified when battery status changes
+    Battery.onUpdate(logBatteryStatus);
+
+    var LostACPower;
+    const powerMonitor = require('electron').powerMonitor;
+    powerMonitor.on('on-battery', function() {
+      LostACPower = true;
+      console.log(LostACPower);
+    });
+
+    powerMonitor.on('on-ac', function() {
+      LostACPower = false;
+      console.log(LostACPower);
+    });
+
+      //Put this in a function and use a callback
+      const dialog = require('electron').dialog;
+      while (LostACPower) {
+          dialog.showMessageBox({
+              type: "warning",
+              buttons: ["AC power is connected"],
+              title: "Please connect AC power",
+              message: "Please ensure AC power is connected.",
+            });
+            console.log(LostACPower);
+      };
+    };
+
+    mainWindow.loadUrl('file://' + __dirname + '/windows/main/main.html');
+    mainWindow.openDevTools();
+
+    // Shutdown
+    powerSaveBlocker.stop(id);
+
+});

@@ -1,14 +1,34 @@
 {
-  "name": "package.json",
+  "name": "AppLauncher",
   "version": "1.0.0",
-  "description": "",
+  "description": "App Launcher for Biomarkers Group",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "postinstall": "install-app-deps",
+    "pack": "build",
+    "dist": "build"
+  },
+  "build": {
+    "app-bundle-id": "your.id",
+    "app-category-type": "your.app.category.type",
+    "iconUrl": "(windows only) A URL to an ICO file to use as the application icon, see details below"
   },
   "author": "Chris Chatham",
   "license": "ISC",
-  "bugs": { "url" : "https://github.com/owner/project/issues"
-, "email" : "project@hostname.com"},
+  "bugs": {
+    "url": "https://github.com/chchatham/AppLauncher/issues",
+    "email": "christopher.chatham@roche.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chchatham/AppLauncher.git"
+  },
+  "devDependencies": {
+    "browser-battery": "^2.0.0",
+    "csv-parse": "^1.0.2",
+    "loudness": "^0.2.2",
+    "serial-number": "^1.1.0",
+  }
 }

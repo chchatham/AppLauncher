@@ -1,0 +1,11 @@
+install git, github, node.js, nsis, github's atom
+from prompt (terminal or git bash) do:
+
+npm install -g electron-prebuilt
+
+then install .net 2.0 SDK
+npm install -g electron-rebuild
+
+npm install -g bower
+
+npm init will walk through creating a package.json

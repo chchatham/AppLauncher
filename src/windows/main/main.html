@@ -3,25 +3,364 @@
 <html>
 <head>
   <title>App Launcher</title>
-      <!-- Stylesheets -->
+      <!-- Stylesheets-->
       <link rel="stylesheet" href="photon.css">
-      <!-- Electron Javascript -->
-      <script src="app.js" charset="utf-8"></script>
-    </head>
+</head>
+<SCRIPT LANGUAGE="JavaScript">
+
+    //declare global variables
+    var TaskCounter = 1;
+      var MaxTaskCount;
+      var idTimer;
+      var myArray = createArray(1,1); //temporary array; will be populated with tasks etc later. Default is [row][column]
+      var CurrDir;
+      var LaunchDateTime;
+      var TaskLauncherInput;
+      var Transmitcommand;
+      var SerialNumber;
+
+    //timestamping function
+    function GetTimeStampNow(){
+      var objToday = new Date();
+      var curYear = objToday.getFullYear();
+      var curDay = objToday.getDay() < 10 ? "0" + objToday.getDay() : objToday.getDay();
+      var curMonth = objToday.getMonth() < 10 ? "0" + objToday.getMonth() : objToday.getMonth();
+      var curHour = objToday.getHours() < 10 ? "0" + objToday.getHours() : objToday.getHours();
+      var curMinute = objToday.getMinutes() < 10 ? "0" + objToday.getMinutes() : objToday.getMinutes();
+      var curSeconds = objToday.getSeconds() < 10 ? "0" + objToday.getSeconds() : objToday.getSeconds();
+      var Timestamp = curHour + ":" + curMinute + ":" + curSeconds + " " + curDay + "." + curMonth + "." + curYear;
+      return Timestamp;
+    }
+
+    //function to run upon launching this app
+    function init() {
+      // other things to do onload
+      LaunchDateTime = GetTimeStampNow();
+      CheckPeripherals();
+      var GetSerialNumber = require('serial-number');
+      GetSerialNumber(function (err, value) {
+	       SerialNumber = value;
+       });
+    }
+    window.onload = init;
+
+    //Function that defines IDs to be used for dummy runs
+    function TestRun() {
+      document.getElementById('AdministratorID').value = "99999999";
+      document.getElementById('ProtocolID').value = "99999999";
+      document.getElementById('CenterID').value = "99999999";
+      document.getElementById('SubjectID').value = "99999999";
+      document.getElementById('SessionID').value = "99999999";
+    }
+
+    //Function that validates the session inputs (corerct number of characters, etc)
+    function ValidateSessionInputs(){
+  		//CheckPeripherals
+      var ConfirmMsg = "Is this correct?\n\n";
+      var retval = confirm(ConfirmMsg.concat("Subject=", document.getElementById('ProtocolID').value, "\nSession=", document.getElementById('SessionID').value, "\nCenterID=", document.getElementById('CenterID').value, ",\nProtocolID=", document.getElementById('ProtocolID').value, "\nAdministrator=", document.getElementById('AdministratorID').value, "\n\nClick OK to continue."));
+  		if (retval==true) {
+          if (document.getElementById('AdministratorID').value=="" || document.getElementById('ProtocolID').value=="" || document.getElementById('CenterID').value=="" || document.getElementById('SessionID').value=="" || document.getElementById('SubjectID').value=="") {
+    				alert("Did you forget to enter all values? Please try again.");
+    		}	else if (document.getElementById('AdministratorID').value < 9999999) {
+    				alert("Please enter a valid Administrator ID.");
+        } else if (document.getElementById('ProtocolID').value == "") {
+    				alert("Please enter a valid Protocol ID.");
+    		}	else if (document.getElementById('CenterID').value < 1000) {
+    				alert("Please enter a valid Center ID.");
+    		}	else if (document.getElementById('SubjectID').value < 9999999) {
+    				alert("Please enter a valid Subject ID.");
+    		}	else if (document.getElementById('SessionID').value == "") {
+    				alert("Please enter a valid Session ID.");
+    		}	else {
+    				TaskCounter = 1;
+    				ReadTaskLauncherInput();
+    		}
+      }
+     }
+
+    //Function that reads the tasklauncher input into an array asynchronously. If you're not familiar with async JS, this will be painful.
+    function ReadTaskLauncherInput(callback) {
+     //read in the file
+      var fs = require('fs');
+      var parse = require('csv-parse');
+      var parser = parse({delimiter: ','}, function(err, data){
+        if (err) {
+                throw err;
+            }
+      TaskLauncherInput = data;
+      GetUniqueSessionsfromTaskLauncherInput();
+      });
+      fs.createReadStream(__dirname+'/InputToAppLauncher.csv').pipe(parser);
+     }
+
+    //Populates session selector with unique values from first column of tasklauncherinput
+    function GetUniqueSessionsfromTaskLauncherInput() {
+      var SessionType = document.getElementById('SessionType');
+      uniques = transpose(TaskLauncherInput)[0].slice(1).unique(); //get first column of task launcher input, skip the first row, and get unique values from the remainder.
+      if (uniques.length == 1){ //check and see if there's only one type of session being run;
+        document.getElementById('SessionType').value = uniques[i]; //if so then just set the sessiontype to this single unique value
+        SelectionSessionType(); //and proceed directly to the construction of the runtasks sequence
+      } else {
+        for (i = 0; i < uniques.length; i++) { //loop through the number of uniques
+            //add each unique session type as an option in the form
+            var option = document.createElement('option');
+            option.text = uniques[i];
+            option.value = uniques[i];
+            option.innerHTML = uniques[i];
+            SessionType.appendChild(option);
+        }
+        scrollTo("SelectionSessionType");        //scroll to the screen where you select the sessiontype
+     }
+    }
+
+    //Subsets the TaskLauncherInput array by whatever session is being run.
+    function SelectionSessionType(){
+      for (i = 0; i < transpose(TaskLauncherInput)[0].slice(1).length; i++) { //loop through rows of tasklauncher input
+        if (transpose(TaskLauncherInput)[0].slice(1)[i] == document.getElementById('SessionType').value){ //check each row for equality with the selected session type
+          myArray[i+1] = TaskLauncherInput[i+1];
+          MaxTaskCount = i;
+        }
+      }
+      //start the run tasks sequence
+      Refresh();
+      scrollTo("RunTasks");
+    }
+
+    //resets all of the buttons on the runtasks portion of the application so that they reflect the appropriate values from tasklauncherinput
+    function Refresh(){
+  	    document.getElementById("RunTaskButton").taskbeinglaunched = myArray[TaskCounter][1]; //Task name
+    	  document.getElementById("RunTaskButton").commandtopass = myArray[TaskCounter][2]; //Task Command; may want to add replace command so as to pass appropriate subject etc info
+    	  document.getElementById("RunTaskButton").value = myArray[TaskCounter][3]; //Text to display
+    	  document.getElementById("Comments").value = "" //Text to display in comments field
+        var element = document.getElementById("TaskCommentstoSolicit");
+    	  element.innerHTML = myArray[TaskCounter][4];
+        var element = document.getElementById("PreliminaryTaskInstructions");
+    	  element.innerHTML = myArray[TaskCounter][5];
+    }
+
+    //for confirming that we're not on AC power and for increasing system volume in a OS independent manner
+    function CheckPeripherals(){
+      //make sure that volume is up
+      if (process.platform=='darwin'){
+        var loudness = require('loudness');
+        loudness.setMuted(false, function (err) {
+        });
+        loudness.setVolume(1, function (err) {
+        });
+      } else {
+        var exec = require('child_process').exec;
+        var cmd = 'VolumeUpcaller.bat';
+        exec(cmd, function(error, stdout, stderr) {
+          if (error !== null) {
+              //this produces an error but it seems to work regardless; so just ignore the error
+          }
+        })
+      }
+
+      //make sure connected to AC power - this appears to work cross-platform
+      const browserBattery = require('browser-battery');
+      browserBattery().then(battery => {
+          if (battery.charging != true) {
+            alert("Please connect to AC power.");
+          };
+      });
+    }
+
+    //two functions to handle the task counter through increment and decrement counter functions
+    function IncrementCounter(){
+  		CheckPeripherals();
+  		TaskCounter = TaskCounter + 1;
+  		if (TaskCounter > MaxTaskCount){
+  			TaskCounter = 1;
+      }
+  		Refresh();
+  	}
+
+  	function DecrementCounter(){
+  		CheckPeripherals();
+  		TaskCounter = TaskCounter - 1;
+  		if (TaskCounter < 1){
+  			TaskCounter = MaxTaskCount;
+  		}
+  		Refresh();
+    }
+
+    //core code for running assessments
+    function RunProgram(){
+      if (myArray[TaskCounter][0] != "EndBattery") {
+  			CheckPeripherals();
+        LaunchDateTime = GetTimeStampNow();
+        var exec = require('child_process').exec;
+        var cmd = form2.RunTaskButton.commandtopass;
+        cmd = cmd.replace("$SubjectID", form.SubjectID.value);
+        cmd = cmd.replace("$SessionID", form.SessionID.value);
+        cmd = cmd.replace("$ProtocolID", form.ProtocolID.value);
+        cmd = cmd.replace("$CenterID", form.CenterID.value);
+        cmd = cmd.replace("$AdministratorID", form.AdministratorID.value);
+        exec(cmd, function(error, stdout, stderr) {
+          if (error !== null) { }
+        });
+  		} else {
+        document.getElementById("SubmitCommentsButton").value = "Submit comments and end session.";
+  			TaskCounter = MaxTaskCount;
+  		}
+        Transmitcommand = myArray[TaskCounter][6];
+        //todo: add ability to combined these transmit commands so that they are all executed at the end of the session.
+  		  scrollTo("SolicitComments");
+    }
+
+    //Does nothing except call savedata and then scroll to runtasks
+    function SaveComments(){
+      SaveData();
+      scrollTo("RunTasks");
+    }
+
+    //function for saving the information from a run of a task
+    function SaveData(){
+      CheckPeripherals();
+      var dataToWrite
+      var CompleteDateTime = GetTimeStampNow();
+      var fs = require('fs');
+      try {
+        stats = fs.lstatSync("TL_" + form.SubjectID.value + "_" + form.SessionID.value + "_" + form.ProtocolID.value + "_" + form.CenterID.value + ".csv");
+        if (stats.isFile()) {} //This will trigger an error if it doesn't exist
+      }
+      catch (e) { //This catches the error and creates the output file
+        dataToWrite = 'SubjectID,SessionID,ProtocolID,CenterID,AdministratorID,SessionType,TaskLaunched,LaunchDateTime,CompleteDateTime,LaunchCommand,SerialNumber,Comments\n';
+        fs.writeFileSync("TL_" + form.SubjectID.value + "_" + form.SessionID.value + "_" + form.ProtocolID.value + "_" + form.CenterID.value + ".csv", dataToWrite, 'utf8', function (err) {});
+      }
+      //write the crap to the file
+      dataToWrite = (form.SubjectID.value + ',' + form.SessionID.value + ',' + form.ProtocolID.value + ',' + form.CenterID.value + ',' + form.AdministratorID.value + ',' + SessionType.value + ',');
+      dataToWrite = (dataToWrite + form2.RunTaskButton.taskbeinglaunched + ',' + LaunchDateTime + ',' + CompleteDateTime + ',' + form2.RunTaskButton.commandtopass + ',' + SerialNumber + ',' + form3.Comments.value + '\n');
+      fs.appendFileSync(("TL_" + form.SubjectID.value + "_" + form.SessionID.value + "_" + form.ProtocolID.value + "_" + form.CenterID.value + ".csv"), dataToWrite, 'utf8', function (err) { });
+      TaskCounter = TaskCounter + 1;
+      if (TaskCounter > MaxTaskCount){
+        TaskCounter = 1;
+        alert("You have completed the battery. Task Launcher will now close. Please be sure to return this USB stick to the networked computer.");
+        window.close()
+      }
+      Refresh();
+    }
+
+    //helper functions for creating arrays, jumping around on pages, transposing matrices, and finding unique values in arrays
+    function createArray(length) {
+        var arr = new Array(length || 0),
+            i = length;
+
+        if (arguments.length > 1) {
+            var args = Array.prototype.slice.call(arguments, 1);
+            while(i--) arr[length-1 - i] = createArray.apply(this, args);
+        }
+
+        return arr;
+    }
+    function scrollTo(hash) {
+      location.hash = "#" + hash;
+    }
+    function transpose(a) {
+      return Object.keys(a[0]).map(
+        function (c) { return a.map(function (r) { return r[c]; }); }
+        );
+    }
+    Array.prototype.contains = function(v) {
+        for(var i = 0; i < this.length; i++) {
+            if(this[i] === v) return true;
+        }
+        return false;
+    };
+    Array.prototype.unique = function() {
+        var arr = [];
+        for(var i = 0; i < this.length; i++) {
+            if(!arr.contains(this[i])) {
+                arr.push(this[i]);
+            }
+        }
+        return arr;
+    }
+
+</script>
 <body>
   <div class="window">
-    <header class="toolbar toolbar-header">
-      <h1 class="title">App Launcher</h1>
-    </header>
     <div class="window-content">
-      <div class="pane-group">
-        <div class="pane-sm sidebar">...</div>
-        <div class="pane">...</div>
-      </div>
-    </div>
-    <footer class="toolbar toolbar-footer">
-      <h1 class="title">AppLauncher v0.01 - For support please contact Biomarkers Group</h1>
-    </footer>
+        <a name="Registration"><img src="header.png" width=100% border=0 style="margin-left: 0px; margin-right: 0px;"></a>
+        <div id="Registration" name="Registration" style="border:1px solid black; margin-top: 10px;margin-left: 10px;margin-right: 10px;margin-bottom: 10px; background: 333333; padding:10px">
+        <h3>To begin the session, please enter the following information. Please enter all "9"s for testing purposes, or simply check the checkbox below.</h3>
+        <form name="form">
+          <div class="form-group">
+            <label>Administrator ID:</label>
+            <input type="text" name="AdministratorID" maxlength='8' autocomplete='off' type="number" required class="form-control" placeholder="AdministratorID" id="AdministratorID">
+          </div>
+          <div class="form-group">
+            <label>Protocol ID:</label>
+            <input type="text" name="ProtocolID" maxlength='8' autocomplete='off' type="number" required class="form-control" placeholder="ProtocolID" id="ProtocolID">
+          </div>
+          <div class="form-group">
+            <label>Center  ID:</label>
+            <input type="text" name="CenterID" maxlength='8' autocomplete='off' type="number" required class="form-control" placeholder="CenterID" id="CenterID">
+          </div>
+          <div class="form-group">
+            <label>Subject ID:</label>
+            <input type="text" name="SubjectID" maxlength='8' autocomplete='off' type="number" required class="form-control" placeholder="SubjectID" id="SubjectID">
+          </div>
+          <div class="form-group">
+            <label>Session ID:</label>
+            <input type="text" name="SessionID" maxlength='8' autocomplete='off' type="number" required class="form-control" placeholder="SessionID" id="SessionID">
+          </div>
+        </form>
+        <button class="btn btn-mini btn-default" name="TestCheckBox" id="TestCheckBox" onclick="TestRun()">Use dummy IDs</button>
+        <input id="button" name="button" type="button" class="btn btn-form btn-primary" value="Submit" onClick="ValidateSessionInputs()">
+          </div>
+
+        <p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br>
+
+        <a name="SelectionSessionType"><img src="header.png" width=100% border=0 style="margin-left: 0px; margin-right: 0px;"></a>
+        <div style="border:1px solid black; margin-top: 10px;margin-left: 10px;margin-right: 10px;margin-bottom: 10px; background: 333333; padding:10px">
+        <h3>Which session would you like to run? Please select:</h3>
+        <div class="container">
+          <table style="width:50%">
+            <form name="SessionForm">
+              <select name="SessionType" id="SessionType" class="form-control">
+              </select>
+            </form>
+          </table>
+        </div>
+        <p>
+        <input id="button" name="button" type="button" class="btn btn-form btn-primary" value="Submit" onClick="SelectionSessionType()"></center>
+        </div>
+
+        <p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br>
+
+          <a name="RunTasks"><img src="header.png" width=100% border=0 style="margin-left: 0px; margin-right: 0px;"></a>
+          <div style="border:1px solid black; margin-top: 10px;margin-left: 10px;margin-right: 10px;margin-bottom: 10px; background: 333333; padding:10px">
+        <h3><span ID="PreliminaryTaskInstructions"></span></h3><br><p><br><h4>
+        <center>
+        <form name="form2">
+        <div style="width:70%">
+            <center><input class="btn btn-form btn-negative" type="button" id="button" name="Back" value="Back" onClick="DecrementCounter()">
+            <input class="btn btn-form btn-primary" type="button" id="RunTaskButton" name="RunTaskButton" value="Run The Current Task" onClick="RunProgram()" commandtopass="C:\Windows\notepad.exe"
+        taskbeinglaunched="notepad" LaunchDateTime="now">
+            <input class="btn btn-form btn-positive" type="button" id="button" name="Skip" value="Skip" onClick="IncrementCounter()"></center>
+        </div>
+        </form>
+        </center>
+        </div>
+
+      <p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br>
+
+        <a name="SolicitComments"><img src="header.png" width=100% border=0 style="margin-left: 0px; margin-right: 0px;"></a>
+        <div style="border:1px solid black; margin-top: 10px;margin-left: 10px;margin-right: 10px;margin-bottom: 10px; background: 333333; padding:10px">
+        <h3><span name="TaskCommentstoSolicit" id="TaskCommentstoSolicit"> </span></h3><br><p><br><h4>
+        <center>
+        <form name="form3">
+        <div style="width:90%">
+            <center><div class="form-group"><br><textarea name="Comments" id="Comments" class="form-control" rows="5"></textarea></div><p><br><input type="button" id="SubmitCommentsButton" value="Submit Comments and Proceed to Next Task" onClick="SaveComments()" class="btn btn-form btn-primary"></center>
+        </div>
+        </center>
+        <p><br><p>
+        </div>
+
+      <p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br><p><br>
+
   </div>
 
 
